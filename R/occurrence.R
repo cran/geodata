@@ -110,14 +110,14 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	base <- "https://api.gbif.org/v1/occurrence/search?"
 	
 	if (!is.null(args)) {
-		args <- trim(as.character(args))
+		args <- trimws(as.character(args))
 		args <- paste("&", paste(args, collapse="&"), sep="")
 	}
 	
 	ntries <- min(max(ntries, 1), 100)
 
 	url1 <- paste(base, "scientificname=", spec, "&limit=1", cds, ex, args, sep="")
-	test <- try (utils::download.file(url1, tmpfile, quiet=TRUE))
+	test <- try (utils::download.file(url1, tmpfile), silent=TRUE)
 	json <- scan(tmpfile, what="character", quiet=TRUE, sep="\n",  encoding = "UTF-8")
 	x <- jsonlite::fromJSON(json)
 	if (!download) {
@@ -170,7 +170,7 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 				breakout <- TRUE
 				break
 			}
-			test <- try (utils::download.file(aurl, tmpfile, quiet=TRUE))
+			test <- try (utils::download.file(aurl, tmpfile), silent=TRUE)
 			if (class(test) == "try-error") {
 				print("download failure, trying again...")
 			} else {
@@ -247,7 +247,7 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 		vrs <- c("locality", "adm1", "adm2", "country", "continent") 
 		vrs <- vrs[vrs %in% colnames(z)]
 		if (length(vrs) > 0) {
-			fullloc <- trim(as.matrix(z[, vrs]))
+			fullloc <- trimws(as.matrix(z[, vrs]))
 			fullloc <- apply(fullloc, 1, function(x) paste(x, collapse=", "))
 			fullloc <- gsub("NA, ", "", fullloc)
 			fullloc <- gsub(", NA", "", fullloc)
