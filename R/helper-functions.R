@@ -1,8 +1,8 @@
 
 
-.download <- function(aurl, filename) {
+.download <- function(aurl, filename, quiet=FALSE, mode = "wb", cacheOK = TRUE, ...) {
 	fn <- paste(tempfile(), ".download", sep="")
-	res <- utils::download.file(url=aurl, destfile=fn, method="auto", quiet=FALSE, mode = "wb", cacheOK = TRUE)
+	res <- utils::download.file(url=aurl, destfile=fn, quiet=quiet, mode=mode, cacheOK=cacheOK, ...)
 	if (res == 0) {
 		if (suppressWarnings(!file.rename(fn, filename)) ) { 
 			# rename failed, perhaps because fn and filename refer to different devices
@@ -13,6 +13,46 @@
 		stop("could not download the file" )
 	}
 }
+
+.downloadDirect <- function(url, filename, unzip=FALSE, quiet=FALSE, mode="wb", cacheOK=TRUE, ...) {
+	if (!file.exists(filename)) {
+		ok <- try(
+				utils::download.file(url=url, destfile=filename, quiet=quiet, mode=mode, cacheOK=cacheOK, ...)
+			)
+		if (inherits(ok, "try-error")) {
+			if (file.exists(filename)) file.remove(filename)
+			stop("download failed")	
+		}
+		if (!file.exists(filename)) {
+			stop("download failed")
+		}
+	}
+	if (unzip) {
+		zok <- try(utils::unzip(filename, exdir=dirname(filename)))
+		if (inherits(zok, "try-error")) {
+			file.remove(filename)
+			stop("download failed")
+		}
+	}
+	TRUE	
+}	
+
+
+.donwload_url <- function(url, filepath, ...) {
+	if (!(file.exists(filepath))) {
+		.downloadDirect(url, filepath, ...)
+		r <- try(rast(filepath))
+		if (class(r) == "try-error") {
+			try(file.remove(filepath), silent=TRUE)
+			stop("download failed")
+		}
+	} else {
+		r <- rast(filepath)
+	}
+	r
+}
+
+
 
 .dataloc <- function() {
 	stop("path does not exist")

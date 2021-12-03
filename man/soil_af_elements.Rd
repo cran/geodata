@@ -14,7 +14,7 @@ For more information, see \url{https://www.isric.org/projects/soil-property-maps
 }
 
 \usage{
-soil_af_elements(var, path)
+soil_af_elements(var, path, ...)
 }
 
 
@@ -22,6 +22,8 @@ soil_af_elements(var, path)
   \item{var}{character. Variables name. One of: "Al", "B", "Ca", "Cu", "Fe", "K", "Mg", "Mn", "N", "Na", "P", "Ptot", "Zn". See Details}
   
   \item{path}{character. Path to download the data to}
+  
+  \item{...}{additional arguments passed to \code{\link{download.file}}}  
 } 
 
 \value{
@@ -60,7 +62,7 @@ Hengl T, Heuvelink GBM, Kempen B, Leenaars JGB, Walsh MG, Shepherd KD, et al. (2
 
 \examples{
 \donttest{
-ph <- soil_elements("Fe", path=tempdir())
+ph <- soil_af_elements("Fe", path=tempdir())
 }
 }
 

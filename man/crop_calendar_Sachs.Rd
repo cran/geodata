@@ -10,12 +10,13 @@ Sachs crop calendar data
 }
 
 \usage{
-crop_calendar_sacks(crop="", path=".")
+crop_calendar_sacks(crop="", path, ...)
 }
 
 \arguments{
  \item{crop}{character. Crop name. See \code{monfredaCrops} for valid names}  
  \item{path}{character. Path name where the data should be downloaded to}  
+  \item{...}{additional arguments passed to \code{\link{download.file}}} 
 }
 
 \value{
@@ -27,7 +28,7 @@ Sacks, W.J., D. Deryng, J.A. Foley, and N. Ramankutty, 2010. Crop planting dates
 }
 
 \seealso{
-\url{https://nelson.wisc.edu/sage/data-and-models/crop-calendar-dataset/index.php}
+\url{https://sage.nelson.wisc.edu/data-and-models/datasets/crop-calendar-dataset/}
 }
 
 

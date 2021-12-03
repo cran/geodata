@@ -17,7 +17,7 @@ The data have a CC-BY 4.0 NC license
 }
 
 \usage{
-soil_af(var, depth, path)
+soil_af(var, depth, path, ...)
 }
 
 
@@ -27,6 +27,9 @@ soil_af(var, depth, path)
   \item{depth}{numeric. One of \code{5, 15, 30, 60, 100, 200}. This is shorthand for the following depth ranges: 0-5, 5-15, 15-30, 30-60, 60-100, 100-200 cm. Or one of \code{20, 50} for 0-20 or 20-50 cm}
   
   \item{path}{character. Path to download the data to}
+  
+  \item{...}{additional arguments passed to \code{\link{download.file}}}
+  
 } 
 
 \value{
@@ -42,7 +45,7 @@ SpatRaster
 \tab silt \tab Soil texture fraction silt \tab \% \cr
 \tab coarse \tab Coarse fragments volumetric \tab \% \cr
 \tab SOC \tab Organic carbon \tab \ifelse{latex}{\out{$g\cdot kg^{-1}$}}{\out{g kg<sup>-1</sup>}} (‰) \cr
-\tab BLKD \tab Bulk density (fine earth) \tab \ifelse{latex}{\out{$kg\cdot dm^{-3}$}}{\out{kg dm<sup>-3</sup>}} \cr
+\tab BLKD \tab Bulk density (fine earth) \tab \ifelse{latex}{\out{$kg\cdot m^{-3}$}}{\out{kg m<sup>-3</sup>}} \cr
 \tab poros \tab Porosity (volum. fraction) based on PTF\tab - \cr
 \tab AWpF2.0 \tab Avail. soil water capacity (volum. frac.) for FC = pF 2.0 \tab - \cr
 \tab AWpF2.3 \tab Avail. soil water capacity (volum. frac.) for FC = pF 2.3 \tab - \cr
@@ -78,6 +81,6 @@ Hengl T, Heuvelink GBM, Kempen B, Leenaars JGB, Walsh MG, Shepherd KD, et al. (2
 
 \examples{
 \donttest{
-ph <- soil_af(var="phh2o", depth=5)
+aph <- soil_af(var="ph", depth=5, path=tempdir())
 }
 }

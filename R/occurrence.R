@@ -97,7 +97,7 @@
 }
 
 
-sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, removeZeros=FALSE, download=TRUE, ntries=5, nrecs=300, start=1, end=Inf) {
+sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, removeZeros=FALSE, download=TRUE, ntries=5, nrecs=300, start=1, end=Inf, ...) {
 	
 	
 	if (! requireNamespace("jsonlite")) { stop("You need to install the jsonlite package to use this function") }
@@ -117,7 +117,7 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	ntries <- min(max(ntries, 1), 100)
 
 	url1 <- paste(base, "scientificname=", spec, "&limit=1", cds, ex, args, sep="")
-	test <- try (utils::download.file(url1, tmpfile), silent=TRUE)
+	test <- .downloadDirect(url1, tmpfile, ...)
 	json <- scan(tmpfile, what="character", quiet=TRUE, sep="\n",  encoding = "UTF-8")
 	x <- jsonlite::fromJSON(json)
 	if (!download) {
@@ -127,12 +127,12 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 			return(x$count)
 		}
 	} else {
-		cnt <- ifelse(is.null(x$count), 0, x$count)
-		message(cnt, " records found")
-		if (cnt == 0) {
+		end <- ifelse(is.null(x$count), 0, x$count)
+		message(end, " records found")
+		if (end == 0) {
 			return(NULL)
 		}
-		if (cnt > 200000) {
+		if (end > 200000) {
 			stop("The number of records is larger than the maximum for download via this service (200,000)")
 		}		
 	}
@@ -161,6 +161,8 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 		message(paste(start-1, "-", sep=""), appendLF = FALSE) 
 		utils::flush.console()
 		tries <- 0
+		np <- np + 1
+		
         #======= if download fails due to server problems, keep trying  =======#
         while (TRUE) {
 			tries <- tries + 1
@@ -170,7 +172,7 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 				breakout <- TRUE
 				break
 			}
-			test <- try (utils::download.file(aurl, tmpfile), silent=TRUE)
+			test <- .downloadDirect(aurl, tmpfile, quiet = TRUE)
 			if (class(test) == "try-error") {
 				print("download failure, trying again...")
 			} else {
@@ -198,7 +200,8 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 		if (breakout) break
 		if (x$endOfRecords) break
 	}
-	
+	message(end) 
+
 	message(min(end, x$count), " records downloaded")
 
 	if (length(g) == 0) {
