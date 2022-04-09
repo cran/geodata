@@ -36,7 +36,7 @@
 		
 		e <- cnx[(cnx %in% cnd)]	
 		for (j in e) {
-			if (class(x[,j]) != class(dd[,j])) {
+			if (!all(class(x[,j]) == class(dd[,j]))) {
 				x[,j] <- as.character(x[,j])
 				dd[,j] <- as.character(dd[,j])
 			}
@@ -105,7 +105,7 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	tmpfile <- paste0(tempfile(), ".json")
 	ex <- .getExtGBIF(ext)
 	spec <- .fixNameGBIF(genus, species)
-	if (geo) { cds <- "&coordinatestatus=true" } else { cds <- "" }
+	if (geo) { cds <- "&hasCoordinate=true" } else { cds <- "" }
 
 	base <- "https://api.gbif.org/v1/occurrence/search?"
 	
@@ -117,8 +117,9 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	ntries <- min(max(ntries, 1), 100)
 
 	url1 <- paste(base, "scientificname=", spec, "&limit=1", cds, ex, args, sep="")
-	test <- .downloadDirect(url1, tmpfile, ...)
+	test <- .downloadDirect(url1, tmpfile, quiet=TRUE, ...)
 	json <- scan(tmpfile, what="character", quiet=TRUE, sep="\n",  encoding = "UTF-8")
+	try(file.remove(tmpfile), silent=TRUE)
 	x <- jsonlite::fromJSON(json)
 	if (!download) {
 		if (is.null(x$count)) {
@@ -172,11 +173,12 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 				breakout <- TRUE
 				break
 			}
-			test <- .downloadDirect(aurl, tmpfile, quiet = TRUE)
-			if (class(test) == "try-error") {
+			test <- .downloadDirect(aurl, tmpfile, quiet=TRUE, ...)
+			if (inherits(test, "try-error")) {
 				print("download failure, trying again...")
 			} else {
 				json <- scan(tmpfile, what="character", quiet=TRUE, sep="\n",  encoding = "UTF-8")
+				try(file.remove(tmpfile), silent=TRUE)
 				json <- chartr("\a\v", "  ", json)
 				x <- jsonlite::fromJSON(json)
 				if (is.null(x$count)) {
@@ -266,7 +268,6 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	z <- cbind(z, downloadDate=d)
 	
 	#	if (inherits(ext, "SpatialPolygons")) { overlay	}
-	try(file.remove(tmpfile), silent=TRUE)
 	
 	return(z)
 }

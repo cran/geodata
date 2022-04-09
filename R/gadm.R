@@ -1,10 +1,18 @@
 
-.gadm_download <- function(filename, gversion, upath="pck", ...) {
-	if (!dir.exists(dirname(filename))) {
-		stop("path does not exist")
-	}
+.gadm_download <- function(filename, gversion, upath="pck", check=TRUE, ...) {
+	
+	.check_path(dirname(filename))
+
 	if (!file.exists(filename)) {
-		baseurl <- paste0("https://biogeo.ucdavis.edu/data/gadm", gversion)
+
+		if (check) {
+			f <- paste0("https://geodata.ucdavis.edu/gadm/gadm", gversion, ".txt")
+			ff <- readLines(f)
+			if (!(basename(filename) %in% ff)) {
+				return(vect())
+			}
+		}
+		baseurl <- paste0(dirname(.data_url()), "/gadm/gadm", gversion)
 		if (upath=="") {
 			theurl <- file.path(baseurl, basename(filename))		
 		} else {
@@ -25,27 +33,32 @@
 }
 
 
-world <- function(resolution=5, level=0, path, version=3.6, ...) {
+world <- function(resolution=5, level=0, path, version="3.6", ...) {
 	stopifnot(level[1] == 0)
 	resolution = round(resolution[1])
 	stopifnot(resolution %in% 1:5)
-	stopifnot(version[1] == 3.6)
+	version <- as.character(version)
+	stopifnot(version[1] == "3.6")
 	filename <- file.path(path, paste0("gadm36_adm", level, "_r", resolution, "_pk.rds"))
-	.gadm_download(filename, version[1], "", ...)
+	.gadm_download(filename, version[1], "", check=FALSE, ...)
 }
 
 
-gadm <- function(country, level=1, path, version=3.6, ...) {
+gadm <- function(country, level=1, path, version="3.6", ...) {
 
-	stopifnot(file.exists(path))
 	country <- .getCountryISO(country)
-
 	if (missing(level)) {
 		stop('provide a "level=" argument; levels can be 0, 1, or 2 for most countries, and higher for some')
 	}
-	stopifnot(version == 3.6)
-	filename <- file.path(path, paste0('gadm36_', country, '_', level, "_pk.rds"))
-	.gadm_download(filename, version, ...)
+	version <- as.character(version)
+	stopifnot(version[1] %in% c("3.6", "4.0"))
+	fversion <- gsub("\\.", "", version)
+	filename <- file.path(path, paste0("gadm", fversion, "_", country, "_", level, "_pk.rds"))
+	v <- .gadm_download(filename, version[1], ...)
+	if (nrow(v) == 0) {
+		stop(paste(country, "level", level, "is not available")) 
+	}
+	v
 }
 
 

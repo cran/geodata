@@ -11,11 +11,11 @@ crop_spam <- function(crop="", var="area", path=".", africa=FALSE, ...) {
 	folder <- file.path(path, "spam")
 	# area is allowed for backwards compatibility
 	stopifnot(var %in% c("area", "yield", "harv_area", "phys_area", "val_prod", "prod"))
-	stopifnot(dir.exists(path))
+	.check_path(path)
 	dir.create(folder, FALSE, FALSE)
 	crp <- tolower(trimws(crop))
 	crops <- spamCrops()
-	if (!(crp %in% crops)) { stop("crop not know to SPAM; see spamCrops()") }
+	if (!(crp %in% crops)) { stop("crop not in SPAM; see spamCrops()") }
 	i <- which(crp == crops)[1]
 	if (i > nrow(crops)) i = i - nrow(crops)
 	crp <- toupper(crops[i,2])

@@ -1,4 +1,18 @@
 
+.data_url <- function() {
+	"https://geodata.ucdavis.edu/geodata/"
+}
+
+.check_path <- function(path) {
+	if (dir.exists(path)) {
+		return(TRUE)
+	}
+	try(dir.create(path, recursive=FALSE), silent=TRUE)
+	if (!dir.exists(path)) {
+		stop("path does not exist")
+	}
+}
+
 
 .download <- function(aurl, filename, quiet=FALSE, mode = "wb", cacheOK = TRUE, ...) {
 	fn <- paste(tempfile(), ".download", sep="")
@@ -17,8 +31,8 @@
 .downloadDirect <- function(url, filename, unzip=FALSE, quiet=FALSE, mode="wb", cacheOK=TRUE, ...) {
 	if (!file.exists(filename)) {
 		ok <- try(
-				utils::download.file(url=url, destfile=filename, quiet=quiet, mode=mode, cacheOK=cacheOK, ...)
-			)
+			utils::download.file(url=url, destfile=filename, quiet=quiet, mode=mode, cacheOK=cacheOK, ...)
+		)
 		if (inherits(ok, "try-error")) {
 			if (file.exists(filename)) file.remove(filename)
 			stop("download failed")	
@@ -28,9 +42,9 @@
 		}
 	}
 	if (unzip) {
-		zok <- try(utils::unzip(filename, exdir=dirname(filename)))
+		zok <- try(utils::unzip(filename, exdir=dirname(filename)), silent=TRUE)
+		try(file.remove(filename), silent=TRUE)
 		if (inherits(zok, "try-error")) {
-			file.remove(filename)
 			stop("download failed")
 		}
 	}
@@ -42,7 +56,7 @@
 	if (!(file.exists(filepath))) {
 		.downloadDirect(url, filepath, ...)
 		r <- try(rast(filepath))
-		if (class(r) == "try-error") {
+		if (inherits(r, "try-error")) {
 			try(file.remove(filepath), silent=TRUE)
 			stop("download failed")
 		}
