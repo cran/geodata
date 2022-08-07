@@ -144,15 +144,28 @@ worldclim_global <- function(var, res, path, ...) {
 .check_cmip6 <- function(res, var, ssp, model, time) {
 	stopifnot(ssp %in% c("126", "245", "370", "585"))
 	stopifnot(res %in% c("0.5", "2.5", "5", "10"))
-	stopifnot(var %in% c("tmin", "tmax", "prec", "bio", "bioc"))
+	stopifnot(var %in% c("tmin", "tmax", "prec", "bioc"))
 	if (!(model %in% .cmods)) {
 		stop(paste("not a valid model, use of of:\n", paste(.cmods, collapse=", ")))
 	}
-	stopifnot(time %in% c("2021-2040", "2041-2060", "2061-2080"))
+	stopifnot(time %in% c("2021-2040", "2041-2060", "2061-2080", "2081-2100"))
 
 	# some combinations do not exist. Catch these here.
-
+    #find 30s -type f -printf "%f\n"  | cut -c11-100 > files.txt
+	tmpfile <- file.path(tempdir(), "cmip6_files.txt")
+	if (!file.exists(tmpfile)) {
+		suppressWarnings(try(utils::download.file(paste0(.c6url, "files.txt"), tmpfile,  quiet=TRUE), silent=TRUE))
+	}
+	if (file.exists(tmpfile)) {
+		ff <- utils::read.table(tmpfile, sep="_")
+		i <- ff[,1] == var & ff[,2] == model & ff[,3] == paste0("ssp", ssp) & ff[,4] == paste0(time, ".tif")
+		if (sum(i) != 1) {
+			stop("This dataset is not available")
+		}
+	}
 }
+
+
 
 cmip6_world <- function(model, ssp, time, var, res, path, ...) {
 
@@ -189,19 +202,24 @@ cmip6_tile <- function(lon, lat, model, ssp, time, var, path, ...) {
 	dir.create(path, showWarnings=FALSE)
 
 	r <- rast(res=30)
-	id <- cellFromXY(r, cbind(lon,lat))
-	if (is.na(id)) stop("invalid coordinates (lon/lat reversed?)")
+	ids <- cellFromXY(r, cbind(lon, lat))
+	if (any(is.na(ids))) stop("invalid coordinates (lon/lat reversed?)")
 
 	pth <- file.path(path, "wc2.1_tiles")
 	dir.create(pth, showWarnings=FALSE)
 
-	fname <- paste0("wc2.1_30s_", var, "_", model, "_ssp", ssp, "_", time, "_tile-", id, ".tif")
+	fname <- paste0("wc2.1_30s_", var, "_", model, "_ssp", ssp, "_", time, "_tile-", ids, ".tif")
 	outfname <- file.path(path, fname)
-
-	if (!file.exists(outfname)) {
-		turl <- paste0(.c6url, "tiles/", model, "/ssp", ssp, "/", fname)
-		.downloadDirect(turl, outfname, ...)
+	for (i in 1:length(outfname)) {
+		if (!file.exists(outfname[i])) {
+			turl <- paste0(.c6url, "tiles/", model, "/ssp", ssp, "/", fname[i])
+			.downloadDirect(turl, outfname[i], ...)
+		}
 	}
-	rast(outfname)
+	if (length(outfname) == 1) {
+		rast(outfname)
+	} else {
+		vrt(outfname)
+	}
 }
 
