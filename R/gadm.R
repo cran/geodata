@@ -25,10 +25,13 @@
 	}	
 	if (file.exists(filename)) {
 		r <- readRDS(filename)
-		r@crs <- "+proj=longlat +datum=WGS84"
-		return( vect(r) ) 
+		if (utils::packageVersion("terra") < "1.6.22") {
+			vect(r)
+		} else {
+			r
+		}
 	} else {
-		return(NULL)
+		NULL
 	}
 }
 
