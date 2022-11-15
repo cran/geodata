@@ -2,15 +2,24 @@
 .wcurl <- "https://geodata.ucdavis.edu/climate/worldclim/2_1/"
 
 .wccruts <- function(lon, lat, path, ...) {
-
 }
 
 
+.get_id <- function(lon, lat) {
+	r <- rast(res=5)	
+	id <- cellFromXY(r, cbind(lon,lat))[1]
+	if (is.na(id)) stop("invalid coordinates (lon/lat reversed?)")
+	path <- system.file(package="geodata")
+	tiles <- readRDS(file.path(path, "ex/tiles.rds"))
+	if (!(id %in% tiles)) {
+		stop("there is no weather data for this location (not on land?)")
+	}
+	id
+}
+
 .wcerad <- function(lon, lat, path, ...) {
 	.check_path(path)
-	r <- rast(res=5)
-	id <- cellFromXY(r, cbind(lon,lat))
-	if (is.na(id)) stop("invalid coordinates (lon/lat reversed?)")
+	id <- .get_id(lon, lat)	
 	pth <- file.path(path, "wcdera")
 	fname <- paste0("wcdera_", id, ".nc")
 	outfname <- file.path(pth, fname)
@@ -19,15 +28,31 @@
 		turl <- paste0(.wcurl, "day/nc/", fname)
 		.downloadDirect(turl, outfname, ...)
 	}
-	#vars <- c("tmin", "tmax", "prec", "srad", "vapr", "wind")
+		sds(outfname)
+}
+
+
+.wcerad21 <- function(lon, lat, path, ...) {
+	.check_path(path)
+	id <- .get_id(lon, lat)
+
+	pth <- file.path(path, "wcdera")
+	fname <- paste0("wcdera_", id, ".nc")
+	outfname <- file.path(pth, gsub("_", "21_", fname))
+	if (!file.exists(outfname)) {
+		dir.create(pth, showWarnings=FALSE)
+		turl <- paste0(.wcurl, "day/nc21/", fname)
+		.downloadDirect(turl, outfname, ...)
+	}
 	sds(outfname)
 }
 
 
 
-
-worldclim_tile <- function(var, lon, lat, path, ...) {
-	stopifnot(var %in% c("tavg", "tmin", "tmax", "prec", "bio", "bioc", "elev"))
+worldclim_tile <- function(var, lon, lat, path, version="2.1", ...) {
+	stopifnot(var %in% c("tavg", "tmin", "tmax", "prec", "bio", "bioc", "elev", "wind", "vapr", "srad"))
+	version <- as.character(version)
+	stopifnot(version %in% c("2.1"))
 	if (var == "bioc") var <- "bio"
 	.check_path(path)
 
@@ -49,9 +74,11 @@ worldclim_tile <- function(var, lon, lat, path, ...) {
 }
 
 
-worldclim_country <- function(country, var, path, ...) {
+worldclim_country <- function(country, var, path, version="2.1", ...) {
 
-	stopifnot(var %in% c("tavg", "tmin", "tmax", "prec", "bio", "bioc", "elev"))
+	stopifnot(var %in% c("tavg", "tmin", "tmax", "prec", "bio", "bioc", "elev", "wind", "vapr", "srad"))
+	version <- as.character(version)
+	stopifnot(version %in% c("2.1"))
 	if (var == "bioc") var <- "bio"
 	iso <- .getCountryISO(country)
 	
@@ -70,11 +97,13 @@ worldclim_country <- function(country, var, path, ...) {
 }
 
 
-worldclim_global <- function(var, res, path, ...) {
+worldclim_global <- function(var, res, path, version="2.1", ...) {
 
 	res <- as.character(res)
+	version <- as.character(version)
 	stopifnot(res %in% c("2.5", "5", "10", "0.5"))
-	stopifnot(var %in% c("tavg", "tmin", "tmax", "prec", "bio", "bioc", "elev"))
+	stopifnot(var %in% c("tavg", "tmin", "tmax", "prec", "bio", "bioc", "elev", "wind", "vapr", "srad"))
+	stopifnot(version %in% c("2.1"))
 	if (var == "bioc") var <- "bio"
 	.check_path(path)
 
