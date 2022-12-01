@@ -7,7 +7,7 @@
 \title{Sacks crop calendar data}
 
 \description{
-Download Sacks crop calendar data for a crop. The crops available are returned by \code{sacks_cropnames} 
+Download Sacks crop calendar data. The crops available are returned by \code{sacksCrops} 
 }
 
 \usage{
@@ -17,7 +17,7 @@ sacksCrops()
 }
 
 \arguments{
- \item{crop}{character. Crop name. See \code{monfredaCrops} for valid names}  
+ \item{crop}{character. Crop name. See \code{sacksCrops} for valid names}  
  \item{path}{character. Path name where the data should be downloaded to}  
   \item{...}{additional arguments passed to \code{\link{download.file}}} 
 }

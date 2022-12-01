@@ -99,10 +99,7 @@
 sp_genus <- function(genus, simple=TRUE, ...) {
 	gurl <- paste0("https://api.gbif.org/v1/species/match?name=", genus)
 	tmpfile <- tempfile()
-	test <- .downloadDirect(gurl, tmpfile, quiet=TRUE, ...)
-	if (inherits(test, "try-error")) {
-		stop("download failure, try again?")
-	}
+	if (!.downloadDirect(gurl, tmpfile, quiet=TRUE, ...)) return(NULL)
 	json <- scan(tmpfile, what="character", quiet=TRUE, sep="\n",  encoding = "UTF-8")
 	try(file.remove(tmpfile), silent=TRUE)
 	json <- chartr("\a\v", "  ", json)
@@ -116,10 +113,7 @@ sp_genus <- function(genus, simple=TRUE, ...) {
 	while (TRUE) {
 		surl <- paste0("https://api.gbif.org/v1/species/search?rank=SPECIES&highertaxon_key=", key, "&offset=", off, "&limit=1000")
 		tmpfile <- tempfile()
-		test <- .downloadDirect(surl, tmpfile, quiet=TRUE, ...)
-		if (inherits(test, "try-error")) {
-			stop("download failure, try again?")
-		}
+		if (!.downloadDirect(surl, tmpfile, quiet=TRUE, ...)) return(NULL)
 		json <- scan(tmpfile, what="character", quiet=TRUE, sep="\n",  encoding = "UTF-8")
 		try(file.remove(tmpfile), silent=TRUE)
 		x <- jsonlite::fromJSON(json)
@@ -171,7 +165,7 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	ntries <- min(max(ntries, 1), 100)
 
 	url1 <- paste(base, "scientificname=", spec, "&limit=1", cds, ex, args, sep="")
-	test <- .downloadDirect(url1, tmpfile, quiet=TRUE, ...)
+	if (!.downloadDirect(url1, tmpfile, quiet=TRUE, ...)) return(NULL)
 	json <- scan(tmpfile, what="character", quiet=TRUE, sep="\n",  encoding = "UTF-8")
 	try(file.remove(tmpfile), silent=TRUE)
 	x <- jsonlite::fromJSON(json)
@@ -183,8 +177,12 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 		}
 	}
 	
-	start <- max(1, start)
 	ntot <- ifelse(is.null(x$count), 0, x$count)
+	if (ntot == 0) {
+		message("no records found")
+		return(NULL)
+	}
+	start <- max(1, start)
 	end <- min(end, ntot)
 	stopifnot(start <= end)
 
@@ -235,30 +233,27 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 				breakout <- TRUE
 				break
 			}
-			test <- .downloadDirect(aurl, tmpfile, quiet=TRUE, ...)
-			if (inherits(test, "try-error")) {
-				print("download failure, trying again...")
-			} else {
-				json <- scan(tmpfile, what="character", quiet=TRUE, sep="\n",  encoding = "UTF-8")
-				try(file.remove(tmpfile), silent=TRUE)
-				json <- chartr("\a\v", "  ", json)
-				x <- jsonlite::fromJSON(json)
-				if (is.null(x$count)) {
-					x$count <- 0
-					if (i == 1) {
-						warning("no records found")
-						break
-					} else {
-						break
-					}
+			if (!.downloadDirect(aurl, tmpfile, quiet=TRUE, ...)) return(NULL)
+
+			json <- scan(tmpfile, what="character", quiet=TRUE, sep="\n",  encoding = "UTF-8")
+			try(file.remove(tmpfile), silent=TRUE)
+			json <- chartr("\a\v", "  ", json)
+			x <- jsonlite::fromJSON(json)
+			if (is.null(x$count)) {
+				x$count <- 0
+				if (i == 1) {
+					warning("no records found")
+					break
+				} else {
+					break
 				}
-				r <- x$results
-				ok <- !(sapply(r, function(i) class(i)[1]) %in% c("data.frame", "list"))
-				r <- r[, ok]
-				rownames(r) <- NULL
-				g[[i]] <- r
-				break
 			}
+			r <- x$results
+			ok <- !(sapply(r, function(i) class(i)[1]) %in% c("data.frame", "list"))
+			r <- r[, ok]
+			rownames(r) <- NULL
+			g[[i]] <- r
+			break
 	    }
 		start <- start + nrecs
 		i <- i + 1
