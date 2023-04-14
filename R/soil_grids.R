@@ -20,11 +20,12 @@
 	if (vsi) {
 		sg_url <- "/vsicurl/https://files.isric.org/soilgrids/latest/data/"
 	} else {
-		sg_url <- paste0(.data_url(), "soil/soilgrids/")
+		sg_url <- .data_url("soil/soilgrids/")
+		if (is.null(sg_url)) return(NULL)
 	}
 	
 	var <- var[1]
-	stopifnot(var %in% c("bdod", "cfvo", "clay", "nitrogen", "ocd", "phh2o", "sand", "silt", "soc", "wrb"))
+	stopifnot(var %in% c("bdod", "cfvo", "clay", "nitrogen", "ocd", "ocs", "phh2o", "sand", "silt", "soc", "wrb"))
 	if (var == "wrb") {
 		#h <- readLines("https://files.isric.org/soilgrids/latest/data/wrb/")
 		#h <- grep("vrt<", h, value=TRUE)
@@ -40,7 +41,9 @@
 	} else {
 		depth <- as.character(round(depth[1]))
 		if (var == "ocs") {
-			stopifnot(depth == "30")	
+			if (depth != "30") {
+				stop("ocs is only available for depth=30")
+			}			
 			dd <- "0-30"
 		} else {
 			dpts <- c("5", "15", "30", "60", "100", "200")
@@ -61,19 +64,30 @@
 }
 
 soil_world_vsi <- function(var, depth, stat="mean", name="") {
-	u <- .soil_grids_url(var, depth, stat=stat, name=name, vsi=TRUE)
+	u <- .soil_grids_url(var[1], depth[1], stat=stat[1], name=name[1], vsi=TRUE)
 	rast(u)
 }
 
 
 soil_world <- function(var, depth, stat="mean", name="", path, ...) {
-	.check_path(path)
+
+	if (length(var) > 1) {
+		r <- lapply(var, function(v) soil_world(v, depth, stat=stat, name=name, path, ...))
+		return(rast(r))
+	}
+	depth <- depth[1]
+	stat <- stat[1]
+	
+	path <- .get_path(path, add="soil_world")
+	if (is.null(path)) return(NULL)
+	
 	u <- .soil_grids_url(var, depth, stat=stat, name=name, vsi=FALSE)
+	if (is.null(u)) return(NULL)
 	u <- gsub(".vrt$", "_30s.tif", u)
 	filename <- basename(u)
 	filepath <- file.path(path, filename)
 	if (!file.exists(filepath)) {
-		txtpath <- paste0(.data_url(), "soil/soilgrids/files.txt")
+		txtpath <- .data_url("soil/soilgrids/files.txt")
 		ff <- readLines(txtpath)
 		if (!(filename %in% ff)) {
 			stop(paste("file not yet available:", filename))

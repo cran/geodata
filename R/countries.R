@@ -1,9 +1,15 @@
 
 
-country_codes <- function() {
+country_codes <- function(query = NULL) {
 	path <- system.file(package="geodata")
-	#d <- utils::read.csv(paste(path, "/ex/countries.csv", sep=""), stringsAsFactors=FALSE, encoding="UTF-8")
-	readRDS(file.path(path, "ex/countries.rds"))
+	res <- readRDS(file.path(path, "ex/countries.rds"))
+    if ((!is.null(query)) && (!is.na(query[1]))) {
+		query <- query[1]
+        hits <- apply(res, 1, function(x) any(grepl(query, x, ignore.case = TRUE)))
+        res[hits, ]
+    } else {
+		res
+	}
 }
 
 

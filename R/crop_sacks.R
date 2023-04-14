@@ -20,19 +20,28 @@ sacksCrops <- function() {
 
 crop_calendar_sacks <- function(crop="", path, ...) {
 
-	.check_path(path)
-	folder <- file.path(path, "cal_sacks")
-	dir.create(folder, FALSE, FALSE)
+	path <- .get_path(path, "calendar/sacks")
 
 	m <- .sacks_crops()
+	crop <- tolower(crop)
 	if (!(crop %in% m[,2])) {
 		cat("Choose one of:\n")
 		print(m[,2])
 	} else {
 		i <- which(m[,2] == crop)
-		fout <- file.path(folder, m[i,1])
+		fout <- file.path(path, m[i,1])
+		if (file.exists(fout)) {
+			r <- try(terra::rast(fout), silent=TRUE)
+			if (inherits(r, "try-error")) {
+				file.remove(fout)
+			} else {
+				return(r)
+			}
+		}
 		if (!file.exists(fout)) {
-			baseurl <- paste0(.data_url(), "crops/sacks2/")
+			baseurl <- .data_url("crops/sacks2/")
+			if (is.null(baseurl)) return(NULL)
+
 			url <- paste0(baseurl, m[i,1])
 			if (!.downloadDirect(url, fout, ...)) return(NULL)
 		}
@@ -44,9 +53,8 @@ crop_calendar_sacks <- function(crop="", path, ...) {
 
 .old_crop_calendar_sacks <- function(crop="", path, ...) {
 
-	.check_path(path)
-	folder <- file.path(path, "sacks")
-	dir.create(folder, FALSE, FALSE)
+	path <- .get_path(path, "sacks")
+	dir.create(path, FALSE, FALSE)
 
 	m <- .old_sacks_crops()
 	if (!(crop %in% m[,2])) {
@@ -54,10 +62,12 @@ crop_calendar_sacks <- function(crop="", path, ...) {
 		print(m[,2])
 	} else {
 		i <- which(m[,2] == crop)
-		fout <- file.path(folder, m[i,1])
+		fout <- file.path(path, m[i,1])
 		fout2 <- gsub(".gz$", "", fout)
 		if (!file.exists(fout2)) {
-			baseurl <- paste0(.data_url(), "crops/sacks/")
+			baseurl <- .data_url("crops/sacks/")
+			if (is.null(baseurl)) return(NULL)
+			
 			url <- paste0(baseurl, m[i,1])
 			if (!.downloadDirect(url, fout, ...)) return(NULL)
 			R.utils::gunzip(fout)
@@ -67,3 +77,25 @@ crop_calendar_sacks <- function(crop="", path, ...) {
 	}
 }
 
+
+rice_calendar <- function(path, ...) {
+	path <- .get_path(path, "calendar/rice")
+	ff <- .get_from_uri("doi:10.7910/DVN/JE6R2R", path)
+	fz <- grep("zip$", ff, value=TRUE)
+	if (length(fz) == 0) {
+		message("something went wrong")
+		return(NULL)
+	}
+	ok <- lapply(fz, function(f) utils::unzip(f, exdir=path))
+	fs <- grep("shp$", unlist(ok), value=TRUE)
+	x <- lapply(fs, function(f) { 
+			v <- vect(f)
+			nms <- names(v)
+			i <- grep("^Shape\\_", nms)
+			j <- which(nms == "OBJECTID_1")
+			v[,-c(i,j)]
+		})
+	x <- svc(x)
+	names(x) <- gsub(".shp$", "", basename(fs))
+	x
+}

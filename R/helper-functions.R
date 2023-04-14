@@ -1,47 +1,75 @@
 
-.data_url <- function() {
-	"https://geodata.ucdavis.edu/geodata/"
+.data_url <- function(add="", durl="https://geodata.ucdavis.edu/geodata/") {
+	con <- url(durl)
+	check <- suppressWarnings(try(open.connection(con, open="rt", timeout=5), silent=TRUE)[1])
+	suppressWarnings(try(close.connection(con), silent=TRUE))
+	if (!is.null(check)) {
+		suppressWarnings(
+			x <- try(readLines("https://www.worldclim.org/noservice.txt", warn=FALSE), silent=TRUE)
+		)
+		if (!inherits(x, "try-error")) {
+			message(paste(x, collapse="\n"))
+		} else {
+			message("The geodata server seems to be off-line")
+		}
+		return(NULL)
+	}
+	paste0(durl, add)
 }
 
-.check_path <- function(path) {
+
+.wc_url <- function(add="") {
+	.data_url(add, "https://geodata.ucdavis.edu/climate/worldclim/2_1/")
+}
+
+
+.check_path <- function(path, recursive=FALSE) {
 	if (dir.exists(path)) {
 		return(TRUE)
 	}
-	try(dir.create(path, recursive=FALSE), silent=TRUE)
+	test <- try(dir.create(path, showWarnings=FALSE, recursive=recursive), silent=TRUE)
+	if (inherits(test, "try-error")) {
+		stop("path cannot be created", call.=FALSE)	
+	}
 	if (!dir.exists(path)) {
-		stop("path does not exist")
+		stop("path does not exist", call.=FALSE)
 	}
 }
 
 
-.old.download <- function(aurl, filename, quiet=FALSE, mode = "wb", cacheOK = TRUE, ...) {
-	fn <- paste(tempfile(), ".download", sep="")
-	res <- try(
-			suppressWarnings(
-				utils::download.file(url=aurl, destfile=fn, quiet=quiet, mode=mode, cacheOK=cacheOK, ...)
-			)
-		)
-	if (inherits(res, "try-error")) {
-		message("download failed" )
-		return(NULL)
+.get_path <- function(path, add="") {
+	if (missing(path)) {
+		path <- geodata_path()
 	}
-	if (res == 0) {
-		if (suppressWarnings(!file.rename(fn, filename)) ) { 
-			# rename failed, perhaps because fn and filename refer to different devices
-			file.copy(fn, filename)
-			file.remove(fn)
-		}
-	} else {
-		message("download failed" )
+	path <- path[1]
+	if (!is.character(path)) stop("path is not a character value", call.=FALSE)
+	if (is.null(path)) stop("path cannot be NULL", call.=FALSE)
+	if (is.na(path)) stop("path cannot be NA", call.=FALSE)
+	if (path == "") stop("path is missing", call.=FALSE)
+	.check_path(path)
+	if (add != "") {
+		path <- file.path(path, add)
+		.check_path(path, TRUE)
 	}
+	path.expand(path)
 }
 
-.downloadDirect <- function(url, filename, unzip=FALSE, quiet=FALSE, mode="wb", cacheOK=FALSE, ...) {
+
+geodata_path <- function(path) {
+	if (missing(path)) {
+		return( getOption("geodata_default_path", default = "") )
+	}
+	path <- .get_path(path, TRUE)
+	options(geodata_default_path=path)
+}
+
+
+
+.downloadDirect <- function(url, filename, unzip=FALSE, quiet=FALSE, mode="wb", cacheOK=FALSE, remove=TRUE,  ...) {
 	if (!file.exists(filename)) {
 		ok <- try(
 			suppressWarnings(
-				utils::download.file(url=url, destfile=filename, quiet=quiet, mode=mode, cacheOK=cacheOK, ...)
-			)
+				utils::download.file(url=url, destfile=filename, quiet=quiet, mode=mode, cacheOK=cacheOK, ...)), silent=TRUE
 		)
 		if (inherits(ok, "try-error")) {
 			if (file.exists(filename)) file.remove(filename)
@@ -55,7 +83,7 @@
 	}
 	if (unzip) {
 		zok <- try(utils::unzip(filename, exdir=dirname(filename)), silent=TRUE)
-		try(file.remove(filename), silent=TRUE)
+		if (remove) try(file.remove(filename), silent=TRUE)
 		if (inherits(zok, "try-error")) {
 			message("download failed")
 			return(FALSE)
@@ -67,11 +95,14 @@
 
 .donwload_url <- function(url, filepath, ...) {
 	if (!(file.exists(filepath))) {
-		.downloadDirect(url, filepath, ...)
-		r <- try(rast(filepath))
-		if (inherits(r, "try-error")) {
-			try(file.remove(filepath), silent=TRUE)
-			message("download failed")
+		if (.downloadDirect(url, filepath, ...)) {
+			r <- try(rast(filepath), silent=TRUE)
+			if (inherits(r, "try-error")) {
+				try(file.remove(filepath), silent=TRUE)
+				message("download failed")
+				return(NULL)
+			}
+		} else {
 			return(NULL)
 		}
 	} else {
@@ -82,11 +113,11 @@
 
 
 
-.dataloc <- function() {
-	stop("path does not exist")
-}
 
-.getDataPath <- function(path) {
+...getDataPath <- function(path) {
+	.dataloc <- function() {
+		stop("path does not exist")
+	}
 	path <- trimws(path)
 	if (path=="") {
 		path <- .dataloc()
@@ -109,3 +140,24 @@
 }
 
 
+...old.download <- function(aurl, filename, quiet=FALSE, mode = "wb", cacheOK = TRUE, ...) {
+	fn <- paste(tempfile(), ".download", sep="")
+	res <- try(
+			suppressWarnings(
+				utils::download.file(url=aurl, destfile=fn, quiet=quiet, mode=mode, cacheOK=cacheOK, ...)
+			)
+		)
+	if (inherits(res, "try-error")) {
+		message("download failed" )
+		return(NULL)
+	}
+	if (res == 0) {
+		if (suppressWarnings(!file.rename(fn, filename)) ) { 
+			# rename failed, perhaps because fn and filename refer to different devices
+			file.copy(fn, filename)
+			file.remove(fn)
+		}
+	} else {
+		message("download failed" )
+	}
+}

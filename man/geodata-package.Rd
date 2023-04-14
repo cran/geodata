@@ -13,6 +13,7 @@
 
 \tabular{ll}{
 \bold{Function} \tab \bold{Description} \cr
+\code{\link{bio_oracle}}   \tab  Marine data from bio-oracle\cr
 \code{\link{cmip6_world}}   \tab  Downscaled and calibrated CMIP6 projected future climate data\cr
 \code{\link{cmip6_tile}}   \tab  Downscaled and calibrated CMIP6 data by tile\cr
 \code{\link{country_codes}}\tab   Country codes \cr
@@ -29,9 +30,10 @@
 \code{\link{footprint}} \tab   Human footprint data \cr
 \code{\link{osm}} \tab   OpenStreetMap data by country  \cr
 \code{\link{population}}\tab   Download population density data \cr
+\code{\link{soil_af}}      \tab  Chemical and physical soil properties data for Africa for different soil depths \cr
+\code{\link{soil_af_water}} \tab   Physical soil properties  for Africa for water balance computations \cr
 \code{\link{soil_af_elements}} \tab   Soil element concentration data for Africa \cr
 \code{\link{soil_af_isda}} \tab   Soil data for Africa derived from the iDSA data set\cr
-\code{\link{soil_af}}      \tab   Chemical soil properties data for Africa for different soil depths \cr
 \code{\link{soil_world_vsi}}     \tab   Virtually connect to the global soilgrids data \cr
 \code{\link{soil_world}}   \tab   Global soils data \cr
 \code{\link{sp_occurrence}}\tab   Species occurrence data from the Global Biodiversity Information Facility\cr

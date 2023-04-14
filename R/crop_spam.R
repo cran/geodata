@@ -7,12 +7,12 @@ spamCrops <- function() {
 
 
 
-crop_spam <- function(crop="", var="area", path=".", africa=FALSE, ...) {
-	folder <- file.path(path, "spam")
+crop_spam <- function(crop="", var="area", path, africa=FALSE, ...) {
+	
 	# area is allowed for backwards compatibility
 	stopifnot(var %in% c("area", "yield", "harv_area", "phys_area", "val_prod", "prod"))
-	.check_path(path)
-	dir.create(folder, FALSE, FALSE)
+
+	path <- .get_path(path, add="spam")
 	crp <- tolower(trimws(crop))
 	crops <- spamCrops()
 	if (!(crp %in% crops)) { stop("crop not in SPAM; see spamCrops()") }
@@ -46,18 +46,22 @@ crop_spam <- function(crop="", var="area", path=".", africa=FALSE, ...) {
 		url <- gsub(pre, afpre, url)
 		pre <- afpre
 	}
-	zipf <- file.path(folder, basename(url))
+	zipf <- file.path(path, basename(url))
 	if (!file.exists(zipf)) {
 		if (!.downloadDirect(url, zipf, ...)) return(NULL)
 	}
 	ff <- utils::unzip(zipf, list=TRUE)
 	fs <- grep(crp, ff$Name, value=TRUE)
-	ffs <- file.path(folder, fs)
+	ffs <- file.path(path, fs)
 	if (all(!file.exists(ffs))) {
-		utils::unzip(zipf, files=fs, junkpaths=TRUE, exdir=folder)
+		# utils::unzip(zipf, fails for yield !?
+		utils::unzip(zipf, files=fs, junkpaths=TRUE, exdir=path)
+		#if (length(files) == 0) file.remove(zipf)
+		return(NULL)
 	}
 	x <- terra::rast(ffs)
-
+	
+	
 	#nicenms <- c("A", "all", "I", "irrigated", "H", "rainfed-highinput", "L", "rainfed-lowinput", "S", "rainfed-subsistence", "R", "rainfed")
 	#nicenms <- matrix(nicenms, ncol=2, byrow=TRUE)
 	#nicenms <- nicenms[order(nicenms[,1]), ]

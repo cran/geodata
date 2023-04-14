@@ -159,7 +159,8 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	
 	if (!is.null(args)) {
 		args <- trimws(as.character(args))
-		args <- paste("&", paste(args, collapse="&"), sep="")
+		args <- gsub(" ", "%20", args)
+		args <- paste0("&", paste(args, collapse="&"))
 	}
 	
 	ntries <- min(max(ntries, 1), 100)
@@ -196,8 +197,8 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 		return(NULL)
 	}
 
-	if (ntot > 200000) {
-		stop("The number of records is larger than the maximum for download via this service (200,000)")
+	if (ntot > 100000) {
+		stop("The number of records is larger than the maximum for download via this service (100,000)")
 	}
 
 	nrecs <- min(max(nrecs, 1), 300)
@@ -335,3 +336,66 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 #sa <- gbif("solanum", "acaule var acaule")
 
 
+.run_sp_occurrence_batch <- function(genus, species="", path=".", ext=c(-180,180,-90,90), args=NULL, geo=TRUE, removeZeros=FALSE, ntries=5, nrecs=300, fixnames=TRUE, prefix=NULL, ...) {
+
+	dir.create("gbif", FALSE, FALSE)
+	r <- rast(nrow=2, ncol=2, extent=ext)
+	p <- as.polygons(r)
+	for (i in 1:nrow(p)) {
+		itr <- paste0(prefix, i)
+		fit <- file.path(path, "gbif", paste0(itr, ".rds"))
+		if (!file.exists(fit)) {
+			ep <- ext(p[i])
+			obs <- geodata::sp_occurrence(genus, species, download=FALSE, ext=ep)
+			if (obs >= 50000) {
+				message(paste0(itr, ": split (", obs, ")")); utils::flush.console()
+				d <- .run_sp_occurrence_batch(genus, species, ext=ep, args=args, geo=geo, removeZeros=removeZeros, ntries=ntries, nrecs=nrecs, fixnames=fixnames, prefix=itr)
+			} else if (obs > 0) {
+				message(paste0(itr, ":")); utils::flush.console()
+				d <- NULL
+				d <- geodata::sp_occurrence(genus, species, download=TRUE, ext=ep, args=args, 
+					geo=geo, removeZeros=removeZeros, ntries=ntries, nrecs=nrecs, 
+					fixnames=fixnames, ...)
+				if (!is.null(d)) {
+					saveRDS(d, fit)
+				}
+			} else {
+				message(paste0(itr, ": no records")); utils::flush.console()
+			}
+		} else {
+			message(paste0(itr, ": exists")); utils::flush.console()
+		}
+	}
+}
+
+
+
+sp_occurrence_split <- function(genus, species="", path=".", ext=c(-180,180,-90,90), args=NULL, geo=TRUE, removeZeros=FALSE, ntries=5, nrecs=300, fixnames=TRUE, prefix=NULL, ...) {
+
+	if (is.null(prefix)) {
+		prefix <- tolower(paste0(genus, "_", species, "_"))
+		fout <- file.path(path, "gbif", paste0(genus, "_", species, ".rds"))
+	} else {
+		fout <- file.path(path, "gbif", paste0(prefix, ".rds"))
+	}
+	if (file.exists(fout)) {
+		message("using existing file")
+		out <- readRDS(fout)
+		return(out)
+	}
+
+	.run_sp_occurrence_batch(genus, species, path=path, ext=ext, args=args, geo=geo, removeZeros=removeZeros, ntries=ntries, nrecs=nrecs, fixnames=fixnames, prefix=prefix, ...)
+
+	message("combining")
+	ff  <- list.files("gbif", pattern=paste0("^", genus, "_", species), full.names=TRUE)
+	out <- lapply(ff, readRDS)
+	i <- sapply(out, is.null)
+	if (any(i)) out <- out[[!i]]
+	out <- do.call(.frbind, out)
+	out <- unique(out)
+	saveRDS(out, fout)
+	return(out)
+}
+
+
+#x = sp_occurrence_batch("Anas", "acuta")
