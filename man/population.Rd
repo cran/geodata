@@ -34,7 +34,7 @@ Center for International Earth Science Information Network - CIESIN - Columbia U
 
 \examples{
 \donttest{
+# download may take > 5s
 pop <- population(2020, 10, path=tempdir())
 }
 }
-

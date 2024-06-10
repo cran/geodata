@@ -37,7 +37,7 @@
 }
 
 
-.get_path <- function(path, add="") {
+.get_path <- function(path, add) {
 	if (missing(path)) {
 		path <- geodata_path()
 	}
@@ -47,10 +47,8 @@
 	if (is.na(path)) stop("path cannot be NA", call.=FALSE)
 	if (path == "") stop("path is missing", call.=FALSE)
 	.check_path(path)
-	if (add != "") {
-		path <- file.path(path, add)
-		.check_path(path, TRUE)
-	}
+	path <- file.path(path, add)
+	.check_path(path, TRUE)
 	path.expand(path)
 }
 
@@ -61,10 +59,9 @@ geodata_path <- function(path) {
 		if (p == "") p <- Sys.getenv("GEODATA_PATH")
 		return(p)
 	}
-	path <- .get_path(path, TRUE)
+	path <- .get_path(path, "")
 	options(geodata_default_path=path)
 }
-
 
 
 .downloadDirect <- function(url, filename, unzip=FALSE, quiet=FALSE, mode="wb", cacheOK=FALSE, remove=TRUE,  ...) {
@@ -115,51 +112,3 @@ geodata_path <- function(path) {
 
 
 
-
-...getDataPath <- function(path) {
-	.dataloc <- function() {
-		stop("path does not exist")
-	}
-	path <- trimws(path)
-	if (path=="") {
-		path <- .dataloc()
-	} else {
-		if (substr(path, nchar(path)-1, nchar(path)) == "//" ) {
-			p <- substr(path, 1, nchar(path)-2)		
-		} else if (substr(path, nchar(path), nchar(path)) == "/"  | substr(path, nchar(path), nchar(path)) == "\\") {
-			p <- substr(path, 1, nchar(path)-1)
-		} else {
-			p <- path
-		}
-		if (!file.exists(p) & !file.exists(path)) {
-			stop("path does not exist: ", path)
-		}
-	}
-	if (substr(path, nchar(path), nchar(path)) != "/" & substr(path, nchar(path), nchar(path)) != "\\") {
-		path <- paste(path, "/", sep="")
-	}
-	return(path)
-}
-
-
-...old.download <- function(aurl, filename, quiet=FALSE, mode = "wb", cacheOK = TRUE, ...) {
-	fn <- paste(tempfile(), ".download", sep="")
-	res <- try(
-			suppressWarnings(
-				utils::download.file(url=aurl, destfile=fn, quiet=quiet, mode=mode, cacheOK=cacheOK, ...)
-			)
-		)
-	if (inherits(res, "try-error")) {
-		message("download failed" )
-		return(NULL)
-	}
-	if (res == 0) {
-		if (suppressWarnings(!file.rename(fn, filename)) ) { 
-			# rename failed, perhaps because fn and filename refer to different devices
-			file.copy(fn, filename)
-			file.remove(fn)
-		}
-	} else {
-		message("download failed" )
-	}
-}

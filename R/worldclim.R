@@ -6,8 +6,8 @@
 
 .get_id <- function(lon, lat) {
 	r <- rast(res=5)	
-	id <- cellFromXY(r, cbind(lon,lat))[1]
-	if (is.na(id)) stop("invalid coordinates (lon/lat reversed?)")
+	id <- unique(cellFromXY(r, cbind(lon,lat)))
+	if (any(is.na(id))) stop("invalid coordinates (lon/lat reversed?)")
 	path <- system.file(package="geodata")
 	tiles <- readRDS(file.path(path, "ex/tiles.rds"))
 	if (!(id %in% tiles)) {
@@ -17,23 +17,26 @@
 }
 
 .wcerad <- function(lon, lat, path, ...) {
-	path <- .get_path(path)
-	id <- .get_id(lon, lat)	
+	path <- .get_path(path, "climate")
+	ids <- .get_id(lon, lat)	
+	#ids <- unique(cellFromXY(r, cbind(lon,lat)))
 	pth <- file.path(path, "wcdera")
-	fname <- paste0("wcdera_", id, ".nc")
-	outfname <- file.path(pth, fname)
-	if (!file.exists(outfname)) {
-		dir.create(pth, showWarnings=FALSE)
-		turl <- .wc_url(paste0("day/nc/", fname))
-		if (is.null(turl)) return(NULL)
-		if (!.downloadDirect(turl, outfname, ...)) return(NULL)
+	for (id in ids) {
+		fname <- paste0("wcdera_", id, ".nc")
+		outfname <- file.path(pth, fname)
+		if (!file.exists(outfname)) {
+			dir.create(pth, showWarnings=FALSE)
+			turl <- .wc_url(paste0("day/nc/", fname))
+			if (is.null(turl)) return(NULL)
+			if (!.downloadDirect(turl, outfname, ...)) return(NULL)
+		}
 	}
 	sds(outfname)
 }
 
 
 .wcerad21 <- function(lon, lat, path, ...) {
-	path <- .get_path(path)
+	path <- .get_path(path, "climate")
 	id <- .get_id(lon, lat)
 
 	pth <- file.path(path, "wcdera")
@@ -56,7 +59,7 @@ worldclim_tile <- function(var, lon, lat, path, version="2.1", ...) {
 	version <- as.character(version)
 	stopifnot(version %in% c("2.1"))
 	if (var == "bioc") var <- "bio"
-	path <- .get_path(path)
+	path <- .get_path(path, "climate")
 
 	r <- rast(res=30)
 	id <- cellFromXY(r, cbind(lon,lat))
@@ -86,7 +89,7 @@ worldclim_country <- function(country, var, path, version="2.1", ...) {
 	if (var == "bioc") var <- "bio"
 	iso <- .getCountryISO(country)
 
-	path <- .get_path(path)
+	path <- .get_path(path, "climate")
 	pth <- file.path(path, "wc2.1_country")
 	dir.create(pth, showWarnings=FALSE)
 
@@ -110,7 +113,7 @@ worldclim_global <- function(var, res, path, version="2.1", ...) {
 	stopifnot(var %in% c("tavg", "tmin", "tmax", "prec", "bio", "bioc", "elev", "wind", "vapr", "srad"))
 	stopifnot(version %in% c("2.1"))
 	if (var == "bioc") var <- "bio"
-	path <- .get_path(path)
+	path <- .get_path(path, "climate")
 
 	fres <- ifelse(res=="0.5", "30s", paste0(res, "m"))
 	path <- file.path(path, paste0("wc2.1_", fres, "/"))
@@ -154,7 +157,7 @@ worldclim_global <- function(var, res, path, version="2.1", ...) {
 	# some combinations do not exist. Catch these here.
 	
 	if (var == "bio") var <- "bioc"
-	path <- .get_path(path)
+	path <- .get_path(path, "climate")
 
 	fres <- ifelse(res==0.5, "30s", paste0(res, "m"))
 	path <- file.path(path, paste0("wc2.1_", fres, "/"))
@@ -214,7 +217,7 @@ cmip6_world <- function(model, ssp, time, var, res, path, ...) {
 	ssp <- as.character(ssp)
 	if (var == "bio") var <- "bioc"
 	try(.check_cmip6(res, var, ssp, model, time), silent=TRUE)
-	path <- .get_path(path)
+	path <- .get_path(path, "climate")
 	path <- file.path(path, paste0("wc2.1_", fres, "/"))
 	dir.create(path, showWarnings=FALSE)
 	
@@ -241,7 +244,7 @@ cmip6_tile <- function(lon, lat, model, ssp, time, var, path, ...) {
 	ssp <- as.character(ssp)
 	if (var == "bio") var <- "bioc"
 	.check_cmip6(0.5, var, ssp, model, time)
-	path <- .get_path(path)
+	path <- .get_path(path, "climate")
 	path <- file.path(path, paste0("wc2.1_30s/"))
 	dir.create(path, showWarnings=FALSE)
 

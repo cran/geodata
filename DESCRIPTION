@@ -1,8 +1,8 @@
 Package: geodata
 Type: Package
 Title: Download Geographic Data
-Version: 0.5-9
-Date: 2023-10-12
+Version: 0.6-2
+Date: 2024-06-06
 Depends: R (>= 3.5.0), terra (>= 1.6.41)
 Encoding: UTF-8
 Suggests: jsonlite, R.utils, httr, archive
@@ -12,6 +12,6 @@ Description: Functions for downloading of geographic data for use in spatial ana
 License: GPL (>= 3)
 BugReports: https://github.com/rspatial/geodata/issues/
 NeedsCompilation: no
-Packaged: 2023-10-13 08:14:54 UTC; rhijm
+Packaged: 2024-06-06 07:55:39 UTC; rhijm
 Repository: CRAN
-Date/Publication: 2023-10-13 08:40:02 UTC
+Date/Publication: 2024-06-10 09:00:02 UTC
