@@ -1,11 +1,11 @@
-\name{soil_af_isda}
+\name{soil_af_isda_vsi}
 
-\alias{soil_af_isda}
+\alias{soil_af_isda_vsi}
 
-\title{iSDA soil data for Africa}
+\title{iSDA soil data for Africa, virtual connection}
 
 \description{
-Download soil data for Africa derived from the iDSA data set. The original data were aligned and aggregated to 30 arc-seconds (about 1 km2). The original spatial resolution was 30m.
+Virtually connect to the iSDA soil data for Africa. The spatial of these data is 30m.
 
 For more info see:
 
@@ -15,16 +15,11 @@ For more info see:
 }
 
 \usage{
-soil_af_isda(var, depth=20, error=FALSE, path, virtual=FALSE, ...) 
+soil_af_isda_vsi(var) 
 }
 
 \arguments{
   \item{var}{character. The variables name, one of: "Al", "bdr", "clay", "C.tot", "CEC", "Ca", "db.od", "eCEC.f", "Fe", "K", "Mg", "N.tot", "oc", "P", "pH.H2O", "sand", "silt", "S", "texture", "wpg2", "Zn".see Details}
-  \item{depth}{numeric. One of 20 (for 0-20 cm) and 50 (for 20-50 cm). Ignored if \code{var="bdr"} for which the depth is always 0-200 cm}
-  \item{error}{logical. If \code{TRUE} the error estimates are returned} 
-  \item{path}{character. Path for storing the downloaded data. See \code{\link{geodata_path}}}
-  \item{virtual}{logical. If \code{TRUE} a virtual connection to the file is returned. This is useful if you want to extract a small area without downloading the entire raster}
-  \item{...}{additional arguments passed to \code{\link{download.file}}}  
 }
 
 \value{
@@ -63,13 +58,6 @@ Tomislav Hengl, Matthew A. E. Miller, Josip Križan, Keith D. Shepherd, Andrew S
 }
 
 \seealso{
-\code{\link{soil_af_elements}}, \code{\link{soil_af}}, \code{\link{soil_world}}
+\code{\link{soil_af_elements}}, \code{\link{soil_af_isda}}, \code{\link{soil_world}}
 }
 
-
-\examples{
-\donttest{
-# downloads a large file
-afph <- soil_af_isda("ph.h2o", path=tempdir(), quiet=TRUE)
-}
-}

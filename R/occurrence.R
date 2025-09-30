@@ -145,7 +145,7 @@ sp_genus <- function(genus, simple=TRUE, ...) {
 }
 
 
-sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, removeZeros=FALSE, download=TRUE, ntries=5, nrecs=300, start=1, end=Inf, fixnames=TRUE, ...) {
+sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, removeZeros=FALSE, download=TRUE, ntries=5, nrecs=300, start=1, end=Inf, fixnames=TRUE, sv=FALSE, ...) {
 	
 	
 	if (! requireNamespace("jsonlite")) { stop("You need to install the jsonlite package to use this function") }
@@ -187,9 +187,9 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	end <- min(end, ntot)
 	stopifnot(start <= end)
 
-	if (end > 100000) {
-		stop("GBIF does not allow using this service for record numbers that are > 100,000")
-	}
+	# if (end > 100000) {
+	# 	stop("GBIF does not allow using this service for record numbers that are > 100,000. Try delimiting the query with arguments 'ext', 'args', or 'start' and 'end'.")
+	# }
 
 	ntot <- (end-start)+1
 	message(ntot, " records found")
@@ -198,7 +198,7 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	}
 
 	if (ntot > 100000) {
-		stop("The number of records is larger than the maximum for download via this service (100,000)")
+		stop("The number of records is larger than the maximum for download via this service (100,000). Try delimiting the query with arguments 'ext', 'args', or 'start' and 'end'.")
 	}
 
 	nrecs <- min(max(nrecs, 1), 300)
@@ -325,6 +325,13 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 	z <- z[, sort(colnames(z))]
 	d <- as.Date(Sys.time())
 	z <- cbind(z, downloadDate=d)	
+
+        if (sv) {
+          xcoor <- ifelse(fixnames, "lon", "decimalLongitude")
+          ycoor <- ifelse(fixnames, "lat", "decimalLatitude")
+          z <- vect(z, geom=c(xcoor, ycoor), keepgeom=TRUE, crs="epsg:4326")
+        }
+
 	return(z)
 }
 
@@ -370,7 +377,7 @@ sp_occurrence <- function(genus, species="", ext=NULL, args=NULL, geo=TRUE, remo
 
 
 
-sp_occurrence_split <- function(genus, species="", path=".", ext=c(-180,180,-90,90), args=NULL, geo=TRUE, removeZeros=FALSE, ntries=5, nrecs=300, fixnames=TRUE, prefix=NULL, ...) {
+sp_occurrence_split <- function(genus, species="", path=".", ext=c(-180,180,-90,90), args=NULL, geo=TRUE, removeZeros=FALSE, ntries=5, nrecs=300, fixnames=TRUE, prefix=NULL, sv=FALSE, ...) {
 
 	if (is.null(prefix)) {
 		prefix <- tolower(paste0(genus, "_", species, "_"))
@@ -387,13 +394,20 @@ sp_occurrence_split <- function(genus, species="", path=".", ext=c(-180,180,-90,
 	.run_sp_occurrence_batch(genus, species, path=path, ext=ext, args=args, geo=geo, removeZeros=removeZeros, ntries=ntries, nrecs=nrecs, fixnames=fixnames, prefix=prefix, ...)
 
 	message("combining")
-	ff  <- list.files("gbif", pattern=paste0("^", genus, "_", species), full.names=TRUE)
+	ff <- list.files("gbif", pattern=paste0("^", genus, "_", species), full.names=TRUE, ignore.case=TRUE)
 	out <- lapply(ff, readRDS)
 	i <- sapply(out, is.null)
 	if (any(i)) out <- out[[!i]]
 	out <- do.call(.frbind, out)
 	out <- unique(out)
 	saveRDS(out, fout)
+
+	if (sv) {
+          xcoor <- ifelse(fixnames, "lon", "decimalLongitude")
+          ycoor <- ifelse(fixnames, "lat", "decimalLatitude")
+          out <- vect(out, geom=c(xcoor, ycoor), keepgeom=TRUE, crs="epsg:4326")
+        }
+
 	return(out)
 }
 

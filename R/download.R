@@ -23,46 +23,6 @@
 }
 
 
-.check_path <- function(path, recursive=FALSE) {
-	if (dir.exists(path)) {
-		return(TRUE)
-	}
-	test <- try(dir.create(path, showWarnings=FALSE, recursive=recursive), silent=TRUE)
-	if (inherits(test, "try-error")) {
-		stop("path cannot be created", call.=FALSE)	
-	}
-	if (!dir.exists(path)) {
-		stop("path does not exist", call.=FALSE)
-	}
-}
-
-
-.get_path <- function(path, add) {
-	if (missing(path)) {
-		path <- geodata_path()
-	}
-	path <- path[1]
-	if (!is.character(path)) stop("path is not a character value", call.=FALSE)
-	if (is.null(path)) stop("path cannot be NULL", call.=FALSE)
-	if (is.na(path)) stop("path cannot be NA", call.=FALSE)
-	if (path == "") stop("path is missing", call.=FALSE)
-	.check_path(path)
-	path <- file.path(path, add)
-	.check_path(path, TRUE)
-	path.expand(path)
-}
-
-
-geodata_path <- function(path) {
-	if (missing(path)) {
-		p <- getOption("geodata_default_path", default = "")
-		if (p == "") p <- Sys.getenv("GEODATA_PATH")
-		return(p)
-	}
-	path <- .get_path(path, "")
-	options(geodata_default_path=path)
-}
-
 
 .downloadDirect <- function(url, filename, unzip=FALSE, quiet=FALSE, mode="wb", cacheOK=FALSE, remove=TRUE,  ...) {
 	if (!file.exists(filename)) {

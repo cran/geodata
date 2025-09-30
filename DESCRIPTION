@@ -1,17 +1,28 @@
 Package: geodata
 Type: Package
-Title: Download Geographic Data
-Version: 0.6-2
-Date: 2024-06-06
+Title: Access Geographic Data
+Version: 0.6-6
+Date: 2025-09-29
 Depends: R (>= 3.5.0), terra (>= 1.6.41)
-Encoding: UTF-8
+Imports: rappdirs
 Suggests: jsonlite, R.utils, httr, archive
-Author: Robert J. Hijmans [cre, aut], Márcia Barbosa [ctb], Aniruddha Ghosh [ctb], Alex Mandel [ctb]
+Encoding: UTF-8
 Maintainer: Robert J. Hijmans <r.hijmans@gmail.com>
 Description: Functions for downloading of geographic data for use in spatial analysis and mapping. The package facilitates access to climate, crops, elevation, land use, soil, species occurrence, accessibility, administrative boundaries and other data.
 License: GPL (>= 3)
 BugReports: https://github.com/rspatial/geodata/issues/
+Authors@R: c(
+	person("Robert J.", "Hijmans", role=c("cre", "aut"),  
+			email="r.hijmans@gmail.com", comment=c(ORCID="0000-0001-5872-2872")),			
+    person("Márcia", "Barbosa", role="ctb", comment=c(ORCID="0000-0001-8972-7713")),
+    person("Aniruddha", "Ghosh", role="ctb"),
+    person("Alex", "Mandel", role="ctb"))
 NeedsCompilation: no
-Packaged: 2024-06-06 07:55:39 UTC; rhijm
+Packaged: 2025-09-30 01:28:31 UTC; rhijm
+Author: Robert J. Hijmans [cre, aut] (ORCID:
+    <https://orcid.org/0000-0001-5872-2872>),
+  Márcia Barbosa [ctb] (ORCID: <https://orcid.org/0000-0001-8972-7713>),
+  Aniruddha Ghosh [ctb],
+  Alex Mandel [ctb]
 Repository: CRAN
-Date/Publication: 2024-06-10 09:00:02 UTC
+Date/Publication: 2025-09-30 02:40:03 UTC
